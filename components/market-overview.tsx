@@ -8,52 +8,48 @@ import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer"
-import { MessageCircle } from "lucide-react"
+import { MessageCircle, AlertCircle } from "lucide-react"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { MarketChart } from "@/components/market-chart"
-import { setApiUrl } from "@/lib/api"
 import { useMarketIndices } from "@/hooks/use-finance-api"
+import React from "react"
+import "@/lib/init-api" // Import for side effects only
 
-// In a real app, this would be set in a more appropriate place like _app.tsx
-if (typeof window !== 'undefined') {
-  // For demo purposes, we'll use a placeholder
-  setApiUrl('https://api.example.com');
-}
+// Fallback market indices data
+const FALLBACK_INDICES = [
+  { name: "Dow Jones", symbol: "DJI", price: 38239.98, change: 213.87, change_percent: 0.56, volume: 328000000 },
+  { name: "NASDAQ", symbol: "IXIC", price: 15927.9, change: 196.95, change_percent: 1.23, volume: 4920000000 },
+  { name: "S&P 500", symbol: "SPX", price: 5021.34, change: 37.66, change_percent: 0.75, volume: 2180000000 },
+  { name: "Russell 2000", symbol: "RUT", price: 2011.66, change: -6.45, change_percent: -0.32, volume: 890000000 }
+];
 
 export default function MarketOverview() {
-  const [timeframe, setTimeframe] = useState("1D")
-  const isDesktop = useMediaQuery("(min-width: 768px)")
+  const [timeframe, setTimeframe] = useState("1D");
+  const isDesktop = useMediaQuery("(min-width: 768px)");
   
   // Fetch market indices from the API
   const { data: marketIndicesData, loading, error } = useMarketIndices();
   
-  // Generate market summary from API data or use default message
-  let marketSummary = "Loading market summary...";
+  // Use real data or fallback data
+  const indices = error || !marketIndicesData ? FALLBACK_INDICES : marketIndicesData;
   
-  if (marketIndicesData) {
-    // Calculate average change percentage
-    const avgChange = marketIndicesData
-      .map(index => index.change_percent)
-      .reduce((sum, current) => sum + current, 0) / marketIndicesData.length;
-    
-    // Find index with highest change percentage
-    const sortedIndices = [...marketIndicesData].sort((a, b) => b.change_percent - a.change_percent);
-    const topPerformer = sortedIndices[0].name;
-    
-    marketSummary = `Market overview shows ${avgChange > 0 ? 'positive' : 'negative'} movement with an average change of ${avgChange.toFixed(2)}%. Volume is high across major indices, with ${topPerformer} leading gains.`;
-  }
+  // Generate market summary from the available data
+  const avgChange = indices
+    .map(index => index.change_percent)
+    .reduce((sum, current) => sum + current, 0) / indices.length;
+  
+  // Find index with highest change percentage
+  const sortedIndices = [...indices].sort((a, b) => b.change_percent - a.change_percent);
+  const topPerformer = sortedIndices[0]?.name || "major index";
+  
+  const marketSummary = `Market overview shows ${avgChange > 0 ? 'positive' : 'negative'} movement with an average change of ${avgChange.toFixed(2)}%. Volume is high across major indices, with ${topPerformer} leading gains.`;
   
   // Format market indices data for display
-  const formattedIndices = marketIndicesData ? marketIndicesData.slice(0, 3).map(index => ({
+  const formattedIndices = indices.slice(0, 3).map(index => ({
     name: index.name,
     value: index.price.toLocaleString(undefined, { minimumFractionDigits: 2, maximumFractionDigits: 2 }),
     change: `${index.change_percent >= 0 ? '+' : ''}${index.change_percent.toFixed(2)}%`
-  })) : [
-    // Fallback data if API data is not available
-    { name: "Dow Jones", value: "38,239.98", change: "+0.56%" },
-    { name: "NASDAQ", value: "15,927.90", change: "+1.23%" },
-    { name: "Russell 2000", value: "2,011.66", change: "-0.32%" }
-  ];
+  }));
 
   return (
     <Card className="bg-neutral-50 border border-neutral-200">
@@ -65,8 +61,9 @@ export default function MarketOverview() {
           <div className="p-4 text-center text-gray-500">Loading market data...</div>
         )}
         {error && (
-          <div className="p-4 text-center text-red-500">
-            Error loading market data. Using fallback data.
+          <div className="p-4 flex items-center justify-center gap-2 text-amber-500 bg-amber-50 border-b border-amber-100">
+            <AlertCircle size={16} />
+            <span>Using sample data due to connection issues</span>
           </div>
         )}
         {isDesktop ? (

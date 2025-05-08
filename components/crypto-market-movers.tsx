@@ -10,6 +10,7 @@ import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { MarketMoverTable } from "@/components/market-mover-table"
 import { Input } from "@/components/ui/input"
+import "@/lib/init-api" // Import for side effects only
 
 export default function CryptoMarketMovers() {
   const [activeTab, setActiveTab] = useState("gainers")

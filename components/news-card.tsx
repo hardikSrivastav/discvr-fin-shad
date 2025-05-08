@@ -1,5 +1,6 @@
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
-import { formatDistanceToNow } from "date-fns"
+import { isValid } from "date-fns"
+import { formatDate } from "@/lib/utils"
 
 export interface NewsCardProps {
   title: string
@@ -10,7 +11,16 @@ export interface NewsCardProps {
 }
 
 export function NewsCard({ title, content, source, date, url }: NewsCardProps) {
-  const formattedTime = formatDistanceToNow(date, { addSuffix: true })
+  // Safely format the date, handling potential invalid dates
+  let formattedTime = "Recently";
+  try {
+    const dateObj = date instanceof Date ? date : new Date(date);
+    if (isValid(dateObj)) {
+      formattedTime = formatDate(dateObj);
+    }
+  } catch (error) {
+    console.error("Error formatting date:", error);
+  }
   
   const handleClick = () => {
     if (url) {

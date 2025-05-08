@@ -5,6 +5,7 @@ import LatestResults from "@/components/latest-results"
 import MarketNews from "@/components/market-news"
 import CryptoMarketMovers from "@/components/crypto-market-movers"
 import CryptoNews from "@/components/crypto-news"
+import "@/lib/init-api" // Import for side effects only
 
 export default function HomePage() {
   return (

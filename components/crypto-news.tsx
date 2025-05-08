@@ -5,13 +5,48 @@ import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { NewsCard } from "@/components/news-card"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
-import { setApiUrl } from "@/lib/api"
+import { AlertCircle } from "lucide-react"
 import { useCryptoNews } from "@/hooks/use-finance-api"
+import "@/lib/init-api" // Import for side effects only
 
-// Initialize API URL
-if (typeof window !== 'undefined') {
-  setApiUrl('https://api.example.com');
-}
+// Fallback news data for when the API fails
+const FALLBACK_NEWS = [
+  {
+    title: "Bitcoin Surges Past $60,000 as Institutional Interest Grows",
+    text: "Bitcoin has surpassed the $60,000 mark for the first time in months, as large institutional investors continue to enter the cryptocurrency market.",
+    source: "CryptoDaily",
+    url: "#",
+    publication_date: new Date().toISOString()
+  },
+  {
+    title: "Ethereum ETFs Could Be Next After Bitcoin's Success",
+    text: "Following the successful launch of multiple Bitcoin ETFs, industry experts are now turning their attention to the possibility of Ethereum ETFs being approved next.",
+    source: "CoinNews",
+    url: "#",
+    publication_date: new Date().toISOString()
+  },
+  {
+    title: "Ripple CEO: 'Crypto Regulation Clarity Coming Soon'",
+    text: "The CEO of Ripple has expressed optimism that regulatory clarity for cryptocurrencies is on the horizon, following meetings with policymakers.",
+    source: "BlockchainInsider",
+    url: "#",
+    publication_date: new Date().toISOString()
+  },
+  {
+    title: "NFT Market Shows Signs of Recovery After Slump",
+    text: "The NFT market is showing signs of a comeback, with trading volumes up 20% in the past month after a prolonged downturn.",
+    source: "NFTWorld",
+    url: "#",
+    publication_date: new Date().toISOString()
+  },
+  {
+    title: "Major Bank Launches Cryptocurrency Custody Service",
+    text: "A leading global bank has announced the launch of a cryptocurrency custody service, allowing institutional clients to securely store their digital assets.",
+    source: "FinanceCrypto",
+    url: "#",
+    publication_date: new Date().toISOString()
+  }
+];
 
 export default function CryptoNews() {
   const [searchQuery, setSearchQuery] = useState("")
@@ -19,47 +54,8 @@ export default function CryptoNews() {
   // Fetch crypto news from the API
   const { data: cryptoNewsData, loading, error } = useCryptoNews(20);
   
-  // Fallback data in case API fails
-  const fallbackNews = [
-    {
-      title: "Bitcoin Surges Past $60,000 as Institutional Interest Grows",
-      text: "Bitcoin has surpassed the $60,000 mark for the first time in months, as large institutional investors continue to enter the cryptocurrency market.",
-      source: "CryptoDaily",
-      url: "#",
-      publication_date: "2024-06-10T09:30:00Z"
-    },
-    {
-      title: "Ethereum ETFs Could Be Next After Bitcoin's Success",
-      text: "Following the successful launch of multiple Bitcoin ETFs, industry experts are now turning their attention to the possibility of Ethereum ETFs being approved next.",
-      source: "CoinNews",
-      url: "#",
-      publication_date: "2024-06-09T14:45:00Z"
-    },
-    {
-      title: "Ripple CEO: 'Crypto Regulation Clarity Coming Soon'",
-      text: "The CEO of Ripple has expressed optimism that regulatory clarity for cryptocurrencies is on the horizon, following meetings with policymakers.",
-      source: "BlockchainInsider",
-      url: "#",
-      publication_date: "2024-06-08T12:15:00Z"
-    },
-    {
-      title: "NFT Market Shows Signs of Recovery After Slump",
-      text: "The NFT market is showing signs of a comeback, with trading volumes up 20% in the past month after a prolonged downturn.",
-      source: "NFTWorld",
-      url: "#",
-      publication_date: "2024-06-07T11:00:00Z"
-    },
-    {
-      title: "Major Bank Launches Cryptocurrency Custody Service",
-      text: "A leading global bank has announced the launch of a cryptocurrency custody service, allowing institutional clients to securely store their digital assets.",
-      source: "FinanceCrypto",
-      url: "#",
-      publication_date: "2024-06-06T10:20:00Z"
-    },
-  ]
-  
   // Use API data or fallback data
-  const cryptoNews = cryptoNewsData || fallbackNews;
+  const cryptoNews = error || !cryptoNewsData ? FALLBACK_NEWS : cryptoNewsData;
   
   // Filter news based on search query
   const filteredNews = searchQuery
@@ -69,7 +65,7 @@ export default function CryptoNews() {
       )
     : cryptoNews
 
-  const handleSearch = (e: React.FormEvent) => {
+  const handleSearch = (e: any) => {
     e.preventDefault()
     // In a real implementation, this might trigger an API call with the search query
   }
@@ -95,8 +91,9 @@ export default function CryptoNews() {
           <div className="text-center text-gray-500 py-4">Loading crypto news...</div>
         )}
         {error && (
-          <div className="text-center text-red-500 py-4">
-            Error loading news. Using fallback data.
+          <div className="p-4 flex items-center justify-center gap-2 text-amber-500 bg-amber-50 border-b border-amber-100 rounded-sm mb-2">
+            <AlertCircle size={16} />
+            <span>Using sample data due to connection issues</span>
           </div>
         )}
         {filteredNews.length > 0 ? (

@@ -5,20 +5,45 @@ import { ResizableHandle, ResizablePanel, ResizablePanelGroup } from "@/componen
 import { Tabs, TabsContent, TabsList, TabsTrigger } from "@/components/ui/tabs"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Button } from "@/components/ui/button"
-import { MessageCircle } from "lucide-react"
+import { MessageCircle, AlertCircle } from "lucide-react"
 import { Drawer, DrawerContent, DrawerTrigger } from "@/components/ui/drawer"
 import { useMediaQuery } from "@/hooks/use-media-query"
 import { MarketMoverTable } from "@/components/market-mover-table"
 import { Input } from "@/components/ui/input"
-import { setApiUrl } from "@/lib/api"
+import "@/lib/init-api" // Import for side effects only
 import { useEquitySpotlight } from "@/hooks/use-finance-api"
 
-// In a real app, this would be set in a more appropriate place like _app.tsx
-// The API_URL would be provided when the application is deployed
-if (typeof window !== 'undefined') {
-  // For demo purposes, we'll use a placeholder
-  setApiUrl('https://api.example.com');
-}
+// Fallback stock data for when API fails
+const FALLBACK_STOCKS = {
+  gainers: [
+    { ticker: "NVDA", name: "NVIDIA Corp", price: 950.02, change: 5.23, volume: "23.5M" },
+    { ticker: "AAPL", name: "Apple Inc", price: 198.45, change: 3.78, volume: "45.2M" },
+    { ticker: "MSFT", name: "Microsoft Corp", price: 420.15, change: 2.91, volume: "18.7M" },
+    { ticker: "GOOGL", name: "Alphabet Inc", price: 175.23, change: 2.45, volume: "12.3M" },
+    { ticker: "AMZN", name: "Amazon.com Inc", price: 185.67, change: 2.12, volume: "15.8M" },
+  ],
+  losers: [
+    { ticker: "META", name: "Meta Platforms Inc", price: 480.03, change: -3.45, volume: "15.3M" },
+    { ticker: "TSLA", name: "Tesla Inc", price: 170.85, change: -2.56, volume: "30.7M" },
+    { ticker: "JPM", name: "JPMorgan Chase & Co", price: 193.74, change: -1.87, volume: "8.2M" },
+    { ticker: "V", name: "Visa Inc", price: 273.61, change: -1.42, volume: "5.9M" },
+    { ticker: "DIS", name: "Walt Disney Co", price: 113.45, change: -1.23, volume: "10.1M" },
+  ],
+  mostActive: [
+    { ticker: "AAPL", name: "Apple Inc", price: 198.45, change: 3.78, volume: "45.2M" },
+    { ticker: "TSLA", name: "Tesla Inc", price: 170.85, change: -2.56, volume: "30.7M" },
+    { ticker: "NVDA", name: "NVIDIA Corp", price: 950.02, change: 5.23, volume: "23.5M" },
+    { ticker: "AMD", name: "Advanced Micro Devices", price: 162.75, change: 1.85, volume: "20.9M" },
+    { ticker: "F", name: "Ford Motor Co", price: 12.47, change: -0.56, volume: "19.8M" },
+  ],
+  stats: {
+    gainers_count: 275,
+    losers_count: 225,
+    average_gain: 1.75,
+    average_loss: -1.5,
+    average_volume: 8500000
+  }
+};
 
 export default function MarketMovers() {
   const [activeTab, setActiveTab] = useState("gainers")
@@ -27,24 +52,22 @@ export default function MarketMovers() {
   // Fetch data from the API
   const { data: equityData, loading, error } = useEquitySpotlight();
   
-  // In a real app, this data would come from the API
-  const marketMoversSummary = equityData 
-    ? `Today's market shows ${equityData.market_stats.gainers_count} gainers and ${equityData.market_stats.losers_count} losers. Average gain is ${equityData.market_stats.average_gain.toFixed(2)}% and average loss is ${equityData.market_stats.average_loss.toFixed(2)}%. Trading volume is high with an average of ${(equityData.market_stats.average_volume / 1000000).toFixed(2)}M shares.`
-    : "Loading market summary...";
-
-  // Fallback data in case API fails
-  const fallbackData = [
-    { ticker: "NVDA", name: "NVIDIA Corp", price: 950.02, change: 5.23, volume: "23.5M" },
-    { ticker: "AAPL", name: "Apple Inc", price: 198.45, change: 3.78, volume: "45.2M" },
-    { ticker: "MSFT", name: "Microsoft Corp", price: 420.15, change: 2.91, volume: "18.7M" },
-    { ticker: "GOOGL", name: "Alphabet Inc", price: 175.23, change: 2.45, volume: "12.3M" },
-    { ticker: "AMZN", name: "Amazon.com Inc", price: 185.67, change: 2.12, volume: "15.8M" },
-  ]
+  // Generate market summary based on available data
+  let marketStats;
+  let marketMoversSummary;
+  
+  if (error || !equityData) {
+    marketStats = FALLBACK_STOCKS.stats;
+    marketMoversSummary = `Today's market shows ${marketStats.gainers_count} gainers and ${marketStats.losers_count} losers. Average gain is ${marketStats.average_gain.toFixed(2)}% and average loss is ${marketStats.average_loss.toFixed(2)}%. Trading volume is moderate.`;
+  } else {
+    marketStats = equityData.market_stats;
+    marketMoversSummary = `Today's market shows ${marketStats.gainers_count} gainers and ${marketStats.losers_count} losers. Average gain is ${marketStats.average_gain.toFixed(2)}% and average loss is ${marketStats.average_loss.toFixed(2)}%. Trading volume is high with an average of ${(marketStats.average_volume / 1000000).toFixed(2)}M shares.`;
+  }
 
   // Use API data or fallback data
-  const gainers = equityData ? equityData.top_gainers : fallbackData;
-  const losers = equityData ? equityData.top_losers : fallbackData;
-  const mostActive = equityData ? equityData.most_active : fallbackData;
+  const gainers = error || !equityData ? FALLBACK_STOCKS.gainers : equityData.top_gainers;
+  const losers = error || !equityData ? FALLBACK_STOCKS.losers : equityData.top_losers;
+  const mostActive = error || !equityData ? FALLBACK_STOCKS.mostActive : equityData.most_active;
 
   return (
     <Card className="bg-neutral-50 border border-neutral-200">
@@ -56,8 +79,9 @@ export default function MarketMovers() {
           <div className="p-4 text-center text-gray-500">Loading market data...</div>
         )}
         {error && (
-          <div className="p-4 text-center text-red-500">
-            Error loading market data. Using fallback data.
+          <div className="p-4 flex items-center justify-center gap-2 text-amber-500 bg-amber-50 border-b border-amber-100">
+            <AlertCircle size={16} />
+            <span>Using sample data due to connection issues</span>
           </div>
         )}
         {isDesktop ? (

@@ -55,6 +55,7 @@ export interface EarningsResult {
   estimated_eps: number;
   revenue: number;
   estimated_revenue: number;
+  name?: string;
 }
 
 export interface MarketIndex {
